@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cleanupDatabase } from "@/lib/dbCache";  // ✅ fixed import
+import { cleanupDatabase } from "@/lib/dbCache";
 
 export async function GET() {
   try {
