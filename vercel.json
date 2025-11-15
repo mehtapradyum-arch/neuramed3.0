@@ -1,13 +1,16 @@
 {
-  "functions": {
-    "src/workers/cron.ts": {
-      "runtime": "edge"
-    }
-  },
   "crons": [
-    { "path": "/api/_cron", "schedule": "*/5 * * * *" }
+    { "path": "/api/cron/reminders", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/escalations", "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/forecasts", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/cleanup", "schedule": "0 0 * * *" }
   ],
   "routes": [
-    { "src": "/service-worker.js", "headers": { "cache-control": "public, max-age=0, must-revalidate" } }
+    {
+      "src": "/service-worker.js",
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      }
+    }
   ]
 }
