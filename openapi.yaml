@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: NeuraMed API
+  version: 1.0.0
+paths:
+  /api/users/me:
+    get: { summary: Get current user, responses: { "200": { description: OK } } }
+    put: { summary: Update current user, responses: { "200": { description: OK } } }
+  /api/users/invite-caregiver:
+    post: { summary: Invite caregiver, responses: { "200": { description: OK } } }
+  /api/meds:
+    get: { summary: List meds, responses: { "200": { description: OK } } }
+    post: { summary: Create med, responses: { "200": { description: OK } } }
+  /api/meds/{id}:
+    put: { summary: Update med, responses: { "200": { description: OK } } }
+    delete: { summary: Delete med, responses: { "200": { description: OK } } }
+  /api/schedule/today:
+    get: { summary: Today logs, responses: { "200": { description: OK } } }
+  /api/schedule/confirm:
+    post: { summary: Confirm dose, responses: { "200": { description: OK } } }
+  /api/schedule/skip:
+    post: { summary: Skip dose, responses: { "200": { description: OK } } }
+  /api/vision/identify:
+    post: { summary: Identify pill from image, responses: { "200": { description: OK } } }
+  /api/notify/send:
+    post: { summary: Send notification, responses: { "200": { description: OK } } }
+  /api/caregiver/patients:
+    get: { summary: Caregiver patients, responses: { "200": { description: OK } } }
+  /api/caregiver/patients/{id}/feed:
+    get: { summary: Patient feed, responses: { "200": { description: OK } } }
