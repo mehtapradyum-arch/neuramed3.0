@@ -1,14 +1,23 @@
-import { Medication } from "@prisma/client";
+// src/lib/forecast.ts
+import { prisma } from "@/lib/prisma";
 
-export function dosesPerDay(schedule: any[]): number {
-  return schedule?.length ? schedule.length : 0;
-}
+/**
+ * Generate adherence forecasts based on patient history.
+ */
+export async function generateForecasts(): Promise<void> {
+  const patients = await prisma.user.findMany();
 
-export function forecastDepletion(med: Medication) {
-  const perDay = dosesPerDay(med.schedule as any[]);
-  if (perDay === 0) return null;
-  const days = med.pillCount / perDay;
-  const milliseconds = days * 24 * 60 * 60 * 1000;
-  const date = new Date(Date.now() + milliseconds);
-  return date;
+  for (const patient of patients) {
+    // Example: count missed doses in last 7 days
+    const missed = await prisma.schedule.count({
+      where: {
+        userId: patient.id,
+        completed: false,
+        dueAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      }
+    });
+
+    console.log(`Forecast for ${patient.email}: missed ${missed} doses last week`);
+    // TODO: store forecast results in DB or send to caregiver dashboard
+  }
 }
