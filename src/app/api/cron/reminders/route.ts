@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendReminders } from "@/lib/notify";  // ✅ fixed import
+import { sendReminders } from "@/lib/notify";
 
 export async function GET() {
   try {
