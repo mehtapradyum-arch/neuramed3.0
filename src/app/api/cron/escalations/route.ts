@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { escalateMissedDoses } from "@/lib/scheduler";  // ✅ fixed import
+import { escalateMissedDoses } from "@/lib/scheduler";
 
 export async function GET() {
   try {
