@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateForecasts } from "@/lib/forecast";  // ✅ fixed import
+import { generateForecasts } from "@/lib/forecast";
 
 export async function GET() {
   try {
