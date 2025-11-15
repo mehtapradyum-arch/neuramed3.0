@@ -1,0 +1,6 @@
+/* Global styles for Neuramed */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add your CSS tokens or resets here if needed */
