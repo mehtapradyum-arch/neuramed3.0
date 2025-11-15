@@ -1,16 +1,29 @@
-import { kv } from "@vercel/kv";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { rateLimit } from "@/lib/rateLimit";
 
-type LimitResult = { allowed: boolean; remaining: number; resetAt: number };
-
-export async function rateLimit(key: string, maxPerWindow: number, windowSeconds: number): Promise<LimitResult> {
-  const now = Math.floor(Date.now() / 1000);
-  const windowKey = `rate:${key}:${Math.floor(now / windowSeconds)}`;
-  const count = (await kv.incr(windowKey)) ?? 0;
-  if (count === 1) {
-    await kv.expire(windowKey, windowSeconds);
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const allowed = count <= maxPerWindow;
-  const remaining = Math.max(0, maxPerWindow - count);
-  const resetAt = (Math.floor(now / windowSeconds) + 1) * windowSeconds;
-  return { allowed, remaining, resetAt };
+
+  const limit = await rateLimit(`meds:${session.user?.email}`, 100, 60);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded", resetAt: limit.resetAt },
+      { status: 429 }
+    );
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user!.email! }
+  });
+  const meds = await prisma.medication.findMany({
+    where: { userId: user!.id }
+  });
+
+  return NextResponse.json({ meds });
 }
