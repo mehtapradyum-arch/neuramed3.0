@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  emailVerified  DateTime?
+  role           Role     @default(PATIENT)
+  caregivers     Relationship[] @relation("PatientCaregivers")
+  patients       Relationship[] @relation("CaregiverPatients")
+  medications    Medication[]
+  doseLogs       DoseLog[]
+  alerts         Alert[]
+  scans          VisionScan[]
+  deviceTokens   DeviceToken[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum Role {
+  PATIENT
+  CAREGIVER
+  ADMIN
+}
+
+model Relationship {
+  id            String   @id @default(cuid())
+  patient       User     @relation("PatientCaregivers", fields: [patientId], references: [id])
+  patientId     String
+  caregiver     User     @relation("CaregiverPatients", fields: [caregiverId], references: [id])
+  caregiverId   String
+  permissions   String   @default("read,ack")
+  createdAt     DateTime @default(now())
+}
+
+model Medication {
+  id              String   @id @default(cuid())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+  name            String
+  dosage          String   // e.g., "5 mg", "2 pills"
+  schedule        Json     // e.g., [{time:"08:00", windowMinutes:60}]
+  pillCount       Int      @default(0)
+  refillThreshold Int      @default(10)
+  images          Json?    // URLs array
+  notes           String?
+  critical        Boolean  @default(false)
+  doseLogs        DoseLog[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DoseLog {
+  id          String   @id @default(cuid())
+  med         Medication @relation(fields: [medId], references: [id])
+  medId       String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  scheduledAt DateTime
+  takenAt     DateTime?
+  status      DoseStatus @default(PENDING)
+  source      String     @default("local") // local | server | caregiver
+  createdAt   DateTime   @default(now())
+}
+
+enum DoseStatus {
+  PENDING
+  TAKEN
+  SKIPPED
+  ESCALATED_PATIENT
+  ESCALATED_CAREGIVER
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  med       Medication? @relation(fields: [medId], references: [id])
+  medId     String?
+  type      AlertType
+  status    AlertStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+enum AlertType {
+  REMINDER
+  ESCALATION_PATIENT
+  ESCALATION_CAREGIVER
+  LOW_STOCK
+}
+
+enum AlertStatus {
+  PENDING
+  SENT
+  ACKED
+}
+
+model VisionScan {
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String
+  med            Medication? @relation(fields: [medId], references: [id])
+  medId          String?
+  imageUrl       String
+  predictionText String
+  confidence     Float     @default(0.0)
+  createdAt      DateTime  @default(now())
+}
+
+model Job {
+  id        String   @id @default(cuid())
+  type      String
+  status    String   @default("queued")
+  payload   Json
+  result    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  pushToken String
+  platform  String   // web, ios, android
+  createdAt DateTime @default(now())
+}
