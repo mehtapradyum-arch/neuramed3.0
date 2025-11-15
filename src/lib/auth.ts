@@ -1,39 +1,45 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
-import EmailProvider from "next-auth/providers/email";
+import type { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "./prisma";
+import { prisma } from "@/lib/prisma";
+import Credentials from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
+// Adjust fields/providers to your actual schema and flows
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
   providers: [
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST!,
-        port: Number(process.env.EMAIL_SERVER_PORT!),
-        auth: { user: process.env.EMAIL_SERVER_USER!, pass: process.env.EMAIL_SERVER_PASSWORD! },
-      },
-      from: process.env.EMAIL_FROM!,
-      maxAge: 24 * 60 * 60,
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? ""
     }),
+    Credentials({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+        // Implement your auth logic (e.g., check user in DB, verify password hash)
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+        if (!user) return null;
+        // You should verify the password here
+        return { id: String(user.id), email: user.email, name: user.name ?? undefined };
+      }
+    })
   ],
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as any).role;
-        token.emailVerified = (user as any).emailVerified;
-      }
+      if (user) token.uid = (user as any).id;
       return token;
     },
     async session({ session, token }) {
-      (session as any).role = token.role;
-      (session as any).emailVerified = token.emailVerified;
+      if (token?.uid) (session as any).uid = token.uid;
       return session;
-    },
+    }
   },
   pages: {
-    signIn: "/login",
-    verifyRequest: "/verify",
-  },
+    signIn: "/auth/login"
+  }
 };
