@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "src/workers/cron.ts": {
+      "runtime": "edge"
+    }
+  },
+  "crons": [
+    { "path": "/api/_cron", "schedule": "*/5 * * * *" }
+  ],
+  "routes": [
+    { "src": "/service-worker.js", "headers": { "cache-control": "public, max-age=0, must-revalidate" } }
+  ]
+}
